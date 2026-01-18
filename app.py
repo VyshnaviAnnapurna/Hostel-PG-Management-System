@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = "admin_secret_key"
 
 @app.route("/")
-def index():
+def home():
     return render_template("index.html")
 
 @app.route("/login", methods=["GET", "POST"])
@@ -286,3 +286,4 @@ def student_logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
