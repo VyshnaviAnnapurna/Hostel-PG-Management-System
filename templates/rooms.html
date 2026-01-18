@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin | Rooms Management</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+        }
+
+        .container {
+            width: 80%;
+            margin: 30px auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border: 2px solid black;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        form input, form select {
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        form button {
+            padding: 10px 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        form button:hover {
+            background: #219150;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        table th {
+            background: #34495e;
+            color: white;
+        }
+
+        table tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+
+        
+
+       
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Rooms Management</h2>
+
+    <!-- Add Room Form -->
+    <form method="post">
+        <input type="text" name="room_no" placeholder="Room Number" required>
+       
+        <input type="number" name="capacity" placeholder="Capacity" required>
+        <button type="submit">Add Room</button>
+    </form>
+
+    <!-- Rooms Table -->
+    <table>
+        <tr>
+            <th>Room No</th>
+            
+            <th>Capacity</th>
+            <th>Occupied</th>
+        </tr>
+
+        {% for r in rooms %}
+        <tr>
+            <td>{{ r[1] }}</td>
+            <td>{{ r[2] }}</td>
+            <td>{{ r[3] }}</td>
+          
+        </tr>
+        {% endfor %}
+    </table>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Submit Complaint</title>
+    <style>
+        body {
+            background:#f4efe6;
+            font-family: Arial;
+        }
+        .box {
+            width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            border: 2px solid black;
+            box-shadow: black;
+        }
+        input, textarea, button {
+            width: 90%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 2px solid black;
+            border-radius: 10px;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Submit Complaint</h2>
+    <form method="post">
+        <input type="text" name="subject" placeholder="Subject" required>
+        <textarea name="complaint" placeholder="Describe your issue" required></textarea>
+        <button type="submit">Submit</button>
+    </form>
+</div>
+
+</body>
+</html>
