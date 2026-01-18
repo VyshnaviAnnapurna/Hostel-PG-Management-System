@@ -283,5 +283,3 @@ def student_payments():
 def student_logout():
     session.clear()
     return redirect("/student_login")
-if __name__ == "__main__":
-    app.run(debug=True)
