@@ -5,7 +5,7 @@ def get_db():
         host="localhost",
         user="root",
         password="root",     
-        database="hostel_db2"
+        database="hostel_db3"
     )
 app = Flask(__name__)
 app.secret_key = "admin_secret_key"
@@ -57,6 +57,7 @@ def admin_dashboard():
     )
 
 
+
 @app.route("/rooms", methods=["GET", "POST"])
 def rooms():
     if "admin" not in session:
@@ -75,6 +76,15 @@ def rooms():
     rooms = cur.fetchall()
     con.close()
     return render_template("rooms.html", rooms=rooms)
+@app.route('/delete_room/<int:room_id>', methods=['POST'])
+def delete_room(room_id):
+    con=get_db()
+    cur = con.cursor()
+    cur.execute("DELETE FROM rooms WHERE id = %s", (room_id,))
+    con.commit()
+    cur.close()
+    return redirect('/rooms')
+
 
 
 @app.route("/students", methods=["GET", "POST"])
@@ -120,6 +130,15 @@ def students():
 
     con.close()
     return render_template("students.html", students=students, rooms=rooms)
+@app.route('/delete_student/<int:student_id>', methods=['POST'])
+def delete_student(student_id):
+    con=get_db()
+    cur = con.cursor()
+    cur.execute("DELETE FROM students WHERE id = %s", (student_id,))
+    con.commit()
+    cur.close()
+    return redirect('/students')
+
 @app.route("/payments", methods=["GET", "POST"])
 def payments():
     if "admin" not in session:
@@ -283,3 +302,6 @@ def student_payments():
 def student_logout():
     session.clear()
     return redirect("/student_login")
+
+if __name__ == "__main__":
+    app.run(debug=True)
