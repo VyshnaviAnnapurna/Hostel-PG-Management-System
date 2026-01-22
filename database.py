@@ -1,53 +1,59 @@
 import sqlite3
 
-conn = sqlite3.connect("hostel.db")
-cursor = conn.cursor()
+DB_NAME = "hostel.db"
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS admin (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT,
-    password TEXT
-)
-""")
+def get_db():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS rooms (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    room_no TEXT,
-    capacity INTEGER,
-    occupied INTEGER
-)
-""")
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS students (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    email TEXT,
-    password TEXT,
-    room_id INTEGER
-)
-""")
+def init_db():
+    con = get_db()
+    cur = con.cursor()
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS payments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    student_id INTEGER,
-    amount INTEGER,
-    date TEXT
-)
-""")
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS rooms (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        room_no TEXT UNIQUE,
+        capacity INTEGER,
+        occupied INTEGER DEFAULT 0
+    )
+    """)
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS complaints (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    student_id INTEGER,
-    complaint TEXT,
-    status TEXT
-)
-""")
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS students (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        email TEXT UNIQUE,
+        password TEXT,
+        room_id INTEGER,
+        FOREIGN KEY (room_id) REFERENCES rooms(id)
+    )
+    """)
 
-conn.commit()
-conn.close()
-print("Database created successfully")
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER,
+        amount INTEGER,
+        payment_date TEXT,
+        status TEXT DEFAULT 'Paid',
+        FOREIGN KEY (student_id) REFERENCES students(id)
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS complaints (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER,
+        subject TEXT,
+        complaint TEXT,
+        status TEXT DEFAULT 'Pending',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id)
+    )
+    """)
+
+    con.commit()
+    con.close()
