@@ -225,7 +225,26 @@ def student_dashboard():
         student_name=session["student_name"]
     )
 
-# ---------------- LOGOUT ----------------
+@app.route("/student_room")
+def student_room():
+    if "student_id" not in session:
+        return redirect("/student_login")
+
+    con = get_db()
+    cur = con.cursor()
+
+    cur.execute("""
+        SELECT rooms.room_no, rooms.capacity, rooms.occupied
+        FROM students
+        JOIN rooms ON students.room_id = rooms.id
+        WHERE students.id = ?
+    """, (session["student_id"],))
+
+    room = cur.fetchone()
+    con.close()
+
+    return render_template("student_room.html", room=room)
+
 @app.route("/view_complaints")
 def view_complaint():
     if "student_id" not in session:
