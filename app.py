@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, session
-from database import get_db, init_db
+from database import  get_db,init_db
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 app = Flask(__name__)
 app.secret_key = "admin_secret_key"
@@ -16,11 +18,85 @@ def home():
 @app.route("/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
-        if request.form["username"] == "admin" and request.form["password"] == "admin123":
+        con = get_db()
+        cur = con.cursor()
+
+        admin = cur.execute(
+            "SELECT * FROM admin WHERE username=?",
+            (request.form["username"],)
+        ).fetchone()
+
+        con.close()
+
+        if admin and check_password_hash(admin["password"], request.form["password"]):
             session["admin"] = True
             return redirect("/admin_dashboard")
+
         return "Wrong Credentials"
+
     return render_template("login.html")
+@app.route("/admin_change_password", methods=["GET", "POST"])
+def admin_change_password():
+    if "admin" not in session:
+        return redirect("/login")
+
+    if request.method == "POST":
+        old = request.form["old_password"]
+        new = request.form["new_password"]
+
+        con = get_db()
+        cur = con.cursor()
+
+        admin = cur.execute(
+            "SELECT * FROM admin WHERE username='admin'"
+        ).fetchone()
+
+        if admin and check_password_hash(admin["password"], old):
+            new_hash = generate_password_hash(new)
+            cur.execute(
+                "UPDATE admin SET password=? WHERE username='admin'",
+                (new_hash,)
+            )
+            con.commit()
+            con.close()
+            return "Password Updated Successfully"
+
+        con.close()
+        return "Old password incorrect"
+
+    return render_template("admin_change_password.html")
+@app.route("/student_change_password", methods=["GET", "POST"])
+def student_change_password():
+    if "student_id" not in session:
+        return redirect("/student_login")
+
+    if request.method == "POST":
+        old = request.form["old_password"]
+        new = request.form["new_password"]
+
+        con = get_db()
+        cur = con.cursor()
+
+        student = cur.execute(
+            "SELECT * FROM students WHERE id=?",
+            (session["student_id"],)
+        ).fetchone()
+
+        if student and check_password_hash(student["password"], old):
+            new_hash = generate_password_hash(new)
+            cur.execute(
+                "UPDATE students SET password=? WHERE id=?",
+                (new_hash, session["student_id"])
+            )
+            con.commit()
+            con.close()
+            return "Password Changed Successfully"
+
+        con.close()
+        return "Old password incorrect"
+
+    return render_template("student_change_password.html")
+
 
 # ---------------- ADMIN DASHBOARD ----------------
 @app.route("/admin_dashboard")
@@ -85,19 +161,21 @@ def students():
     cur = con.cursor()
 
     if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = generate_password_hash(request.form["password"])
+        room_id = request.form["room_id"]
+
         cur.execute(
             "INSERT INTO students (name, email, password, room_id) VALUES (?, ?, ?, ?)",
-            (
-                request.form["name"],
-                request.form["email"],
-                request.form["password"],
-                request.form["room_id"]
-            )
+            (name, email, password, room_id)
         )
+
         cur.execute(
             "UPDATE rooms SET occupied = occupied + 1 WHERE id=?",
-            (request.form["room_id"],)
+            (room_id,)
         )
+
         con.commit()
 
     students = cur.execute("""
@@ -106,10 +184,13 @@ def students():
         LEFT JOIN rooms ON students.room_id = rooms.id
     """).fetchall()
 
-    rooms = cur.execute("SELECT id, room_no FROM rooms WHERE occupied < capacity").fetchall()
-    con.close()
+    rooms = cur.execute(
+        "SELECT id, room_no FROM rooms WHERE occupied < capacity"
+    ).fetchall()
 
+    con.close()
     return render_template("students.html", students=students, rooms=rooms)
+
 
 @app.route("/delete_student/<int:student_id>", methods=["POST"])
 def delete_student(student_id):
@@ -141,14 +222,28 @@ def payments():
         con.commit()
 
     payments = cur.execute("""
-        SELECT students.name, payments.amount, payments.payment_date
-        FROM payments
-        JOIN students ON payments.student_id = students.id
-    """).fetchall()
+    SELECT payments.id, students.name, payments.amount, payments.payment_date
+    FROM payments
+    JOIN students ON payments.student_id = students.id
+""").fetchall()
+
 
     students = cur.execute("SELECT id, name FROM students").fetchall()
     con.close()
     return render_template("payments.html", payments=payments, students=students)
+@app.route("/delete_payment/<int:payment_id>", methods=["POST"])
+def delete_payment(payment_id):
+    if "admin" not in session:
+        return redirect("/login")
+
+    con = get_db()
+    cur = con.cursor()
+    cur.execute("DELETE FROM payments WHERE id=?", (payment_id,))
+    con.commit()
+    con.close()
+
+    return redirect("/payments")
+
 
 # ---------------- COMPLAINTS ----------------
 @app.route("/complaints")
@@ -187,19 +282,23 @@ def student_login():
     if request.method == "POST":
         con = get_db()
         cur = con.cursor()
+
         student = cur.execute(
-            "SELECT * FROM students WHERE email=? AND password=?",
-            (request.form["email"], request.form["password"])
+            "SELECT * FROM students WHERE email=?",
+            (request.form["email"],)
         ).fetchone()
+
         con.close()
 
-        if student:
+        if student and check_password_hash(student["password"], request.form["password"]):
             session["student_id"] = student["id"]
             session["student_name"] = student["name"]
             return redirect("/student_dashboard")
+
         return "Invalid Login"
 
     return render_template("student_login.html")
+
 
 # ---------------- STUDENT DASHBOARD ----------------
 @app.route("/student_dashboard")
