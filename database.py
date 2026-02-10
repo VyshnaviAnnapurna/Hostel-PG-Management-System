@@ -38,6 +38,7 @@ def init_db():
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
+        phone TEXT NOT NULL,
         room_id INTEGER,
         FOREIGN KEY (room_id) REFERENCES rooms(id)
     )

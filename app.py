@@ -163,23 +163,34 @@ def students():
     if request.method == "POST":
         name = request.form["name"]
         email = request.form["email"]
+        phone = request.form["phone"]   # ✅ NEW
         password = generate_password_hash(request.form["password"])
         room_id = request.form["room_id"]
 
+        # Insert student with phone number
         cur.execute(
-            "INSERT INTO students (name, email, password, room_id) VALUES (?, ?, ?, ?)",
-            (name, email, password, room_id)
+            """
+            INSERT INTO students (name, email, phone, password, room_id)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (name, email, phone, password, room_id)
         )
 
+        # Update room occupancy
         cur.execute(
-            "UPDATE rooms SET occupied = occupied + 1 WHERE id=?",
+            "UPDATE rooms SET occupied = occupied + 1 WHERE id = ?",
             (room_id,)
         )
 
         con.commit()
 
+    # Fetch students including phone number
     students = cur.execute("""
-        SELECT students.id, students.name, students.email, rooms.room_no
+        SELECT students.id,
+               students.name,
+               students.email,
+               students.phone,
+               rooms.room_no
         FROM students
         LEFT JOIN rooms ON students.room_id = rooms.id
     """).fetchall()
@@ -190,6 +201,7 @@ def students():
 
     con.close()
     return render_template("students.html", students=students, rooms=rooms)
+
 
 
 @app.route("/delete_student/<int:student_id>", methods=["POST"])
